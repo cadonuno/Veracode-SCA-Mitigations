@@ -52,10 +52,9 @@ public final class MitigationProposal {
 
     @Override
     public String toString() {
-        return "MitigationProposal[" +
-                "licenseFinding=" + licenseFinding + ", " +
-                "mitigationType=" + mitigationType + ", " +
-                "applicationProfile=" + applicationProfile + ", " +
-                "mitigationText=" + mitigationText + ']';
+        return "Application Profile: { " + applicationProfile.applicationName() +
+                " - " + applicationProfile.applicationId() + " }, " +
+                "License: { " + licenseFinding.componentFileName() +
+                " - " + licenseFinding.licenseName() + " }";
     }
 }

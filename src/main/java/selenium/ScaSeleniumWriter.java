@@ -7,6 +7,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import scaresults.LicenseFinding;
 import scaresults.MitigationProposal;
+import selenium.exceptions.LibraryNotFoundException;
+import selenium.exceptions.WrongCredentialsException;
 import util.TimeUtils;
 
 import java.util.HashMap;
@@ -22,13 +24,18 @@ public class ScaSeleniumWriter {
     private static final String MITIGATION_SAVE_BUTTON_ID = "save-button";
     private static final String SCA_LICENSES_FILTER_ID = "scaFilterTextLicenses";
     private static final int MAX_ATTEMPTS = 10;
+    public static final String EMPTY_RESULTS_MESSAGE = "Your query did not produce any results. Try using fewer filters or changing your search criteria.";
     private WebDriverWrapper webDriverWrapper;
+    private String veracodeUsername;
+    private String veracodePassword;
 
     public Map<MitigationProposal, MitigationResult> applyMitigations(List<MitigationProposal> mitigationProposals,
                                                                       String veracodeUsername,
-                                                                      String veracodePassword) {
+                                                                      String veracodePassword) throws WrongCredentialsException {
 
         this.webDriverWrapper = new WebDriverWrapper();
+        this.veracodeUsername = veracodeUsername;
+        this.veracodePassword = veracodePassword;
         if (WebDriverProvider.IS_HEADLESS) {
             System.setProperty(FirefoxDriver.SystemProperty.DRIVER_USE_MARIONETTE, "true");
             System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
@@ -43,16 +50,20 @@ public class ScaSeleniumWriter {
         }
     }
 
-    private HashMap<MitigationProposal, MitigationResult> mitigateAllFindings(
-            List<MitigationProposal> mitigationProposals) {
-        return mitigationProposals.stream()
-                .collect(HashMap::new, (hashMap, mitigationProposal) ->
-                                hashMap.put(mitigationProposal, mitigateSingleFinding(mitigationProposal, 0)),
-                        HashMap::putAll);
+    private Map<MitigationProposal, MitigationResult> mitigateAllFindings(
+            List<MitigationProposal> mitigationProposals) throws WrongCredentialsException {
+        Map<MitigationProposal, MitigationResult> findingsMitigated = new HashMap<>();
+        for (MitigationProposal mitigationProposal : mitigationProposals) {
+            findingsMitigated.put(mitigationProposal, mitigateSingleFinding(mitigationProposal, 0));
+        }
+        return findingsMitigated;
     }
 
-    private MitigationResult mitigateSingleFinding(MitigationProposal mitigationProposal, int attempt) {
+    private MitigationResult mitigateSingleFinding(MitigationProposal mitigationProposal, int attempt) throws WrongCredentialsException {
         try {
+            if (!ScaSeleniumWrapper.isLoggedIn(webDriverWrapper)) {
+                ScaSeleniumWrapper.loginToPlatform(veracodeUsername, veracodePassword, webDriverWrapper);
+            }
             webDriverWrapper.openUrl(ScaSeleniumWrapper.APPLICATION_BASE_URL +
                     mitigationProposal.applicationProfile().applicationProfileUrl());
             if (ScaSeleniumWrapper.tryOpenScaPage(webDriverWrapper)) {
@@ -65,7 +76,9 @@ public class ScaSeleniumWriter {
                 return new MitigationResult(HttpCodes.HTTP_NO_CHANGES,
                         "Mitigation of the same type is already accepted for this finding");
             }
-            return new MitigationResult(HttpCodes.HTTP_BAD_REQUEST, "Mitigation not found");
+            return new MitigationResult(HttpCodes.HTTP_BAD_REQUEST, "Unable to open SCA page, ensure that the user being used has access to the application profile and is able to view SCA results");
+        } catch (LibraryNotFoundException e) {
+            return new MitigationResult(HttpCodes.HTTP_BAD_REQUEST, "Library not found: " + mitigationProposal);
         } catch (TimeoutException e) {
             if (attempt > MAX_ATTEMPTS) {
                 return new MitigationResult(HttpCodes.INTERNAL_SERVER_ERROR, "Timeout: " + e.getMessage());
@@ -89,7 +102,10 @@ public class ScaSeleniumWriter {
         ScaSeleniumWrapper.waitForLicenseResultsToLoad(webDriverWrapper);
     }
 
-    private boolean proposeMitigationIfNecessary(MitigationProposal mitigationProposal) throws TimeoutException {
+    private boolean proposeMitigationIfNecessary(MitigationProposal mitigationProposal) throws TimeoutException, LibraryNotFoundException {
+        if (isEmptyQuery()) {
+            throw new LibraryNotFoundException();
+        }
         String mitigationTypeAsText = "Mitigate as " + mitigationProposal.mitigationType().getAsText();
         if (hasProposedThisTypeOfMitigation(mitigationTypeAsText)) {
             return false;
@@ -106,6 +122,17 @@ public class ScaSeleniumWriter {
 
         saveMitigation(mitigationProposal);
         return true;
+    }
+
+    private boolean isEmptyQuery() {
+        return webDriverWrapper.getElement(By.id(ScaSeleniumWrapper.SCA_LICENSES_TABLE_ID))
+                .map(table -> table.findElements(By.xpath(".//tr")))
+                .map(tableRows -> tableRows.get(tableRows.size() - 1))
+                .map(tableRow -> tableRow.findElements(By.xpath(".//td")))
+                .map(tableColumn -> tableColumn.get(tableColumn.size() - 1))
+                .map(WebElement::getText)
+                .map(EMPTY_RESULTS_MESSAGE::equals)
+                .orElse(true);
     }
 
     private boolean hasProposedThisTypeOfMitigation(String mitigationTypeAsText) {

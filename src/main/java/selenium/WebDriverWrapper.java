@@ -133,7 +133,7 @@ public final class WebDriverWrapper {
     }
 
     public void initializeAtUrl(String urlToOpen) {
-        webDriver.get(urlToOpen);
+        openUrl(urlToOpen);
         webDriver.manage().window().setSize(new Dimension(1920, 1080));
     }
 

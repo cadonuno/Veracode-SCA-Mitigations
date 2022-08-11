@@ -9,6 +9,7 @@ import scaresults.LicenseFinding;
 import scaresults.MitigationProposal;
 import scaresults.MitigationTypeEnum;
 import selenium.ScaSeleniumWriter;
+import selenium.exceptions.WrongCredentialsException;
 import util.ApiCredentials;
 import util.apihandlers.ApiCaller;
 
@@ -17,14 +18,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONValue;
 
 public class LicenseMitigationServlet extends HttpServlet {
+
+    public static final String INVALID_CREDENTIALS_MESSAGE = "Invalid Credentials";
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -44,32 +45,48 @@ public class LicenseMitigationServlet extends HttpServlet {
     private void performMitigationFromRequest(LicenseMitigationRequest licenseMitigationRequest,
                                               HttpServletResponse response) throws IOException {
         List<MitigationProposal> mitigationsToApply = buildMitigationProposals(licenseMitigationRequest);
-        Map<MitigationProposal, MitigationResult> mitigationResults =
-                new ScaSeleniumWriter().applyMitigations(mitigationsToApply,
-                        licenseMitigationRequest.getVeracodeUsername(),
-                        licenseMitigationRequest.getVeracodePassword());
+        try {
+            handleExecutionResults(response, new ScaSeleniumWriter().applyMitigations(mitigationsToApply,
+                    licenseMitigationRequest.getVeracodeUsername(),
+                    licenseMitigationRequest.getVeracodePassword()));
+        } catch (WrongCredentialsException e) {
+            writeErrorsToOutputStream(response, new HashMap<String, String>() {{
+                put(RequestParameters.VERACODE_USERNAME, INVALID_CREDENTIALS_MESSAGE);
+                put(RequestParameters.VERACODE_PASSWORD, INVALID_CREDENTIALS_MESSAGE);
+            }});
+        }
+    }
+
+    private void handleExecutionResults(HttpServletResponse response, Map<MitigationProposal, MitigationResult> mitigationResults) throws IOException {
         if (hasOneSuccess(mitigationResults)) {
             outputSuccess(response, mitigationResults);
-        } else if (hasOneError(mitigationResults)) {
+        } else if (hasOneIssueOfType(mitigationResults, HttpCodes.INTERNAL_SERVER_ERROR)) {
             outputFailure(response, mitigationResults);
+        } else if (hasOneIssueOfType(mitigationResults, HttpCodes.HTTP_BAD_REQUEST)) {
+            outputBadRequest(response, mitigationResults);
         } else {
             outputNothingToChange(response, mitigationResults);
         }
+    }
+
+    private boolean hasOneIssueOfType(Map<MitigationProposal, MitigationResult> mitigationResults, int httpBadRequest) {
+        return mitigationResults.values().stream().anyMatch(
+                mitigationResult -> mitigationResult.httpCode() == httpBadRequest);
+    }
+
+    private void outputBadRequest(HttpServletResponse response, Map<MitigationProposal, MitigationResult> mitigationResults) throws IOException {
+        response.setStatus(HttpCodes.HTTP_BAD_REQUEST);
+        outputMitigationResults(response, "Unable to find some libraries", mitigationResults);
     }
 
     private boolean hasOneSuccess(Map<MitigationProposal, MitigationResult> mitigationResults) {
         return mitigationResults.values().stream().anyMatch(Objects::isNull);
     }
 
-    private boolean hasOneError(Map<MitigationProposal, MitigationResult> mitigationResults) {
-        return mitigationResults.values().stream().anyMatch(
-                mitigationResult -> mitigationResult.httpCode() == HttpCodes.INTERNAL_SERVER_ERROR);
-    }
-
     private void outputFailure(HttpServletResponse response,
                                Map<MitigationProposal, MitigationResult> mitigationResults) throws IOException {
         response.setStatus(HttpCodes.INTERNAL_SERVER_ERROR);
-        outputMitigationResults(response, "failure", mitigationResults);
+        outputMitigationResults(response, "Issue detected", mitigationResults);
     }
 
     private void outputSuccess(HttpServletResponse response,
@@ -81,7 +98,7 @@ public class LicenseMitigationServlet extends HttpServlet {
     private void outputNothingToChange(HttpServletResponse response,
                                        Map<MitigationProposal, MitigationResult> mitigationResults) throws IOException {
         response.setStatus(HttpCodes.HTTP_SUCCESS);
-        outputMitigationResults(response, "nothingToChange", mitigationResults);
+        outputMitigationResults(response, "Nothing to Change", mitigationResults);
     }
 
     private void outputMitigationResults(
@@ -140,6 +157,13 @@ public class LicenseMitigationServlet extends HttpServlet {
         StringBuilder stringBuilder = new StringBuilder();
         appendBuilderLine(stringBuilder, "{", 0);
         appendBuilderLine(stringBuilder, addQuotesToJsonValue("errorFields") + ": [", 2);
+        List<Map.Entry<String, String>> entrySet = new ArrayList<>(parameterErrors.entrySet());
+        int lastIndex = entrySet.size() - 1;
+        for (int currentIndex = 0; currentIndex < entrySet.size(); currentIndex++) {
+            appendAttributeToBuilder(stringBuilder, entrySet.get(currentIndex).getKey(),
+                    entrySet.get(currentIndex).getValue(), 2, lastIndex == currentIndex);
+        }
+
         parameterErrors.forEach((key, value) -> writeParameter(stringBuilder, key, value));
         appendBuilderLine(stringBuilder, "]", 2);
         appendBuilderLine(stringBuilder, "}", 0);

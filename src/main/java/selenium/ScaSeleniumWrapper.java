@@ -2,6 +2,7 @@ package selenium;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import selenium.exceptions.WrongCredentialsException;
 
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
@@ -42,13 +43,17 @@ public class ScaSeleniumWrapper {
         return true;
     }
 
-    public static void loginToPlatform(String username, String password, WebDriverWrapper webDriverWrapper) throws TimeoutException {
+    public static void loginToPlatform(String username, String password, WebDriverWrapper webDriverWrapper) throws TimeoutException, WrongCredentialsException {
         webDriverWrapper.initializeAtUrl(LOGIN_URL);
         webDriverWrapper.waitForElementPresent(By.id(LOGIN_BUTTON_ID));
         webDriverWrapper.sendKeysTo(By.id(USERNAME_FIELD_ID), username);
         webDriverWrapper.sendKeysTo(By.id(PASSWORD_FIELD_ID), password);
         webDriverWrapper.clickElement(By.id(LOGIN_BUTTON_ID));
-        webDriverWrapper.waitForElementPresent(By.id(USER_NAME_ICON_ID));
+        try {
+            webDriverWrapper.waitForElementPresent(By.id(USER_NAME_ICON_ID));
+        } catch (TimeoutException e) {
+            throw new WrongCredentialsException();
+        }
     }
 
     public static void waitForLicenseResultsToLoad(WebDriverWrapper webDriver) throws TimeoutException {
@@ -63,5 +68,10 @@ public class ScaSeleniumWrapper {
     public static void startLicenseFilter(WebDriverWrapper webDriver, String filterText) throws TimeoutException {
         webDriver.clickElement(By.id(ScaSeleniumWrapper.SCA_LICENSES_FILTER_ID));
         webDriver.selectOptionByVisibleText(By.id(ScaSeleniumWrapper.SCA_LICENSES_FILTER_ID), filterText);
+    }
+
+    public static boolean isLoggedIn(WebDriverWrapper webDriverWrapper) {
+        webDriverWrapper.openUrl("https://web.analysiscenter.veracode.com/");
+        return webDriverWrapper.hasElement(By.id(USER_NAME_ICON_ID));
     }
 }

@@ -6,7 +6,7 @@ This project exposes a REST API that allows for adding mitigations to SCA licens
 - Veracode API Credentials
 - Veracode account using username & password to login
 - Mitigation Approver permissions
-- Selenium webdriver
+- Selenium webdriver (Firefox recommended)
 
 # Usage:
 - Set the path to the selenium web driver and it's name on selenium.WebDriverWrapper

@@ -1,6 +1,11 @@
 package selenium;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.ElementNotInteractableException;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 import util.TimeUtils;
 
@@ -13,7 +18,7 @@ import java.util.function.Predicate;
 public final class WebDriverWrapper {
 
     private static final String SELENIUM_DRIVER_NAME = "webdriver.gecko.driver";
-    private static final String SELENIUM_DRIVER_LOCATION = "C:\\Veracode\\geckodriver.exe";
+    private static final String SELENIUM_DRIVER_LOCATION = "REPLACE DRIVER LOCATION HERE";
     private static final int POLLING_TIMEOUT = 30;
 
     static {

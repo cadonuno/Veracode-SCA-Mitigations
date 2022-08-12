@@ -160,11 +160,12 @@ public class LicenseMitigationServlet extends HttpServlet {
         List<Map.Entry<String, String>> entrySet = new ArrayList<>(parameterErrors.entrySet());
         int lastIndex = entrySet.size() - 1;
         for (int currentIndex = 0; currentIndex < entrySet.size(); currentIndex++) {
+            appendBuilderLine(stringBuilder, "{", 2);
             appendAttributeToBuilder(stringBuilder, entrySet.get(currentIndex).getKey(),
-                    entrySet.get(currentIndex).getValue(), 2, lastIndex == currentIndex);
+                    entrySet.get(currentIndex).getValue(), 4, lastIndex == currentIndex);
+            appendBuilderLine(stringBuilder, "}", 2);
         }
 
-        parameterErrors.forEach((key, value) -> writeParameter(stringBuilder, key, value));
         appendBuilderLine(stringBuilder, "]", 2);
         appendBuilderLine(stringBuilder, "}", 0);
         outputStream.print(stringBuilder.toString());

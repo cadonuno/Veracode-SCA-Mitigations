@@ -171,10 +171,6 @@ public class LicenseMitigationServlet extends HttpServlet {
         outputStream.print(stringBuilder.toString());
     }
 
-    private void writeParameter(StringBuilder stringBuilder, String key, String value) {
-        appendBuilderLine(stringBuilder, addQuotesToJsonValue(key) + ": " + addQuotesToJsonValue(value), 4);
-    }
-
     private ParameterValidation validateParameters(LicenseMitigationRequest licenseMitigationRequest) {
         ParameterValidation parameterValidation = validateBaseParameters(licenseMitigationRequest);
         if (!parameterValidation.hasErrors()) {

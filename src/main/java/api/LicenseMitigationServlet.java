@@ -161,9 +161,12 @@ public class LicenseMitigationServlet extends HttpServlet {
         int lastIndex = entrySet.size() - 1;
         for (int currentIndex = 0; currentIndex < entrySet.size(); currentIndex++) {
             appendBuilderLine(stringBuilder, "{", 2);
-            appendAttributeToBuilder(stringBuilder, entrySet.get(currentIndex).getKey(),
-                    entrySet.get(currentIndex).getValue(), 4, lastIndex == currentIndex);
-            appendBuilderLine(stringBuilder, "}", 2);
+            Map.Entry<String, String> currentEntry = entrySet.get(currentIndex);
+            appendBuilderLine(stringBuilder, addQuotesToJsonValue("field") + ": " +
+                    addQuotesToJsonValue(JSONValue.escape(currentEntry.getKey())) + ",", 4);
+            appendBuilderLine(stringBuilder, addQuotesToJsonValue("value") + ": " +
+                    addQuotesToJsonValue(JSONValue.escape(currentEntry.getValue())), 4);
+            appendBuilderLine(stringBuilder, "}" + (lastIndex == currentIndex ? "" : ","), 2);
         }
 
         appendBuilderLine(stringBuilder, "]", 2);
@@ -207,9 +210,7 @@ public class LicenseMitigationServlet extends HttpServlet {
                     RequestParameters.APPLICATION_ID);
             checkForNullOrEmptyParameter(parameterValidation, licenseToMitigate.getLicenseName(),
                     RequestParameters.LICENSE_NAME);
-            if (!parameterValidation.hasErrors()) {
-                validateApplicationId(licenseToMitigate, apiCredentials, parameterValidation);
-            }
+            validateApplicationId(licenseToMitigate, apiCredentials, parameterValidation);
             checkIfInvalidOrNullMitigationType(parameterValidation, licenseToMitigate.getMitigationType());
         });
     }
@@ -237,7 +238,7 @@ public class LicenseMitigationServlet extends HttpServlet {
         licenseToMitigate.setApplicationToMitigate(
                 ApiCaller.getApplicationById(licenseToMitigate.getApplicationId(), apiCredentials));
         if (licenseToMitigate.getApplicationToMitigate() == null) {
-            parameterValidation.addError(RequestParameters.APPLICATION_ID, "Application not found");
+            parameterValidation.addError(licenseToMitigate.getApplicationId(), "Application not found");
         }
     }
 

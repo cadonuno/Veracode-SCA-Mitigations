@@ -1,44 +1,37 @@
-package scaresults;
+package scaresults.proposal;
 
+import scaresults.types.LicenseMitigationTypeEnum;
+import scaresults.finding.LicenseFinding;
 import util.ApplicationProfile;
 
 import java.util.Objects;
 
-public final class MitigationProposal {
+public final class LicenseMitigationProposal extends MitigationProposalBase {
     private final LicenseFinding licenseFinding;
-    private final MitigationTypeEnum mitigationType;
-    private final ApplicationProfile applicationProfile;
-    private final String mitigationText;
+    private final LicenseMitigationTypeEnum mitigationType;
 
-    public MitigationProposal(LicenseFinding licenseFinding, MitigationTypeEnum mitigationType,
-                              ApplicationProfile applicationProfile, String mitigationText) {
+
+    public LicenseMitigationProposal(LicenseFinding licenseFinding, LicenseMitigationTypeEnum mitigationType,
+                                     ApplicationProfile applicationProfile, String mitigationText, String acceptanceText) {
+        super(applicationProfile, mitigationText, acceptanceText);
         this.licenseFinding = licenseFinding;
         this.mitigationType = mitigationType;
-        this.applicationProfile = applicationProfile;
-        this.mitigationText = mitigationText;
     }
 
     public LicenseFinding licenseFinding() {
         return licenseFinding;
     }
 
-    public MitigationTypeEnum mitigationType() {
+    public LicenseMitigationTypeEnum mitigationType() {
         return mitigationType;
     }
 
-    public ApplicationProfile applicationProfile() {
-        return applicationProfile;
-    }
-
-    public String mitigationText() {
-        return mitigationText;
-    }
 
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        MitigationProposal that = (MitigationProposal) obj;
+        LicenseMitigationProposal that = (LicenseMitigationProposal) obj;
         return Objects.equals(this.licenseFinding, that.licenseFinding) &&
                 Objects.equals(this.mitigationType, that.mitigationType) &&
                 Objects.equals(this.applicationProfile, that.applicationProfile) &&

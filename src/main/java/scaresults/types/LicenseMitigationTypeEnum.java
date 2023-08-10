@@ -1,17 +1,17 @@
-package scaresults;
+package scaresults.types;
 
 import java.util.Locale;
 
-public enum MitigationTypeEnum {
-    ApprovedByLegal("Approved by Legal"),
-    CommerciallyLicensed("Commercially Licensed"),
-    Experimental("Experimental"),
-    InternalUse("Internal Use"),
+public enum LicenseMitigationTypeEnum {
+    ApprovedByLegal("Mitigate as Approved by Legal"),
+    CommerciallyLicensed("Mitigate as Commercially Licensed"),
+    Experimental("Mitigate as Experimental"),
+    InternalUse("Mitigate as Internal Use"),
     Invalid("Invalid");
 
     private final String typeAsText;
 
-    MitigationTypeEnum(String typeAsText) {
+    LicenseMitigationTypeEnum(String typeAsText) {
         this.typeAsText = typeAsText;
     }
 
@@ -19,7 +19,7 @@ public enum MitigationTypeEnum {
         return typeAsText;
     }
 
-    public static MitigationTypeEnum getByName(String mitigationName) {
+    public static LicenseMitigationTypeEnum getByName(String mitigationName) {
         if (mitigationName == null) {
             return null;
         }

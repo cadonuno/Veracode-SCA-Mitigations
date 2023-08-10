@@ -1,7 +1,8 @@
-package scaresults;
+package scaresults.finding;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import scaresults.LicenseRiskEnum;
 
 import java.util.List;
 import java.util.Objects;

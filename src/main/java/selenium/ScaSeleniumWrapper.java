@@ -16,13 +16,20 @@ public class ScaSeleniumWrapper {
     private static final String USER_NAME_ICON_ID = "icon_user";
     private static final String SCA_BUTTON_XPATH = "//span[text() = 'Software Composition Analysis']";
     private static final String LICENSES_TAB_LINK_XPATH = "//li[@class='ng-scope inactive']/a[text() = 'Licenses']";
+    private static final String VULNERABILITIES_TAB_LINK_XPATH = "//li[@class='ng-scope inactive']/a[text() = 'Vulnerabilities']";
     private static final String SCA_ISSUES_TABLE_LOADING = "scaApplicationComponentsTable_processing";
     private static final String SCA_LICENSES_TABLE_LOADING = "scaLicensesTableWithCheckbox_processing";
+    private static final String SCA_VULNERABILITIES_TABLE_LOADING = "scaVulnerabilitiesTableWithCheckbox_processing";
     public static final String SCA_LICENSES_FILTER_ID = "scaFilterSelectLicenses";
-    public static final String SCA_FILTER_ACTIVATE_BUTTON_ID = "scaFilterBtnLicenses";
+
+    private static final String SCA_VULNERABILITIES_FILTER_ID = "scaFilterSelectVulnerabilities";
+    public static final String SCA_LICENSE_FILTER_ACTIVATE_BUTTON_ID = "scaFilterBtnLicenses";
+    public static final String SCA_VULNERABILITY_FILTER_ACTIVATE_BUTTON_ID = "scaFilterBtnVulnerabilities";
     public static final String SCA_LICENSES_TABLE_ID = "scaLicensesTableWithCheckbox";
+    public static final String SCA_VULNERABILITIES_TABLE_ID = "scaVulnerabilitiesTableWithCheckbox";
 
     public static final Predicate<WebElement> CHECK_FOR_ELEMENT_INVISIBLE_PREDICATE = (element) -> element.getAttribute("style").equals("display: none;");
+
 
     public static void switchToLicensesPage(WebDriverWrapper webDriver) throws TimeoutException {
         webDriver.waitForElementPresent(By.xpath(LICENSES_TAB_LINK_XPATH));
@@ -31,6 +38,19 @@ public class ScaSeleniumWrapper {
         webDriver.clickElement(By.xpath(LICENSES_TAB_LINK_XPATH));
         webDriver.waitForElementPresent(By.id(SCA_LICENSES_FILTER_ID));
         waitForLicenseResultsToLoad(webDriver);
+    }
+
+    public static void switchToVulnerabilitiesPage(WebDriverWrapper webDriver) throws TimeoutException {
+        webDriver.waitForElementPresent(By.xpath(VULNERABILITIES_TAB_LINK_XPATH));
+        webDriver.waitForCondition(By.id(SCA_ISSUES_TABLE_LOADING),
+                CHECK_FOR_ELEMENT_INVISIBLE_PREDICATE);
+        webDriver.clickElement(By.xpath(VULNERABILITIES_TAB_LINK_XPATH));
+        webDriver.waitForElementPresent(By.id(SCA_VULNERABILITIES_FILTER_ID));
+        waitForVulnerabilitiesResultsToLoad(webDriver);
+    }
+
+    public static void waitForVulnerabilitiesResultsToLoad(WebDriverWrapper webDriver) throws TimeoutException {
+        waitForLoad(webDriver, By.id(SCA_VULNERABILITIES_TABLE_LOADING));
     }
 
     public static boolean tryOpenScaPage(WebDriverWrapper webDriver) throws TimeoutException {
@@ -68,6 +88,11 @@ public class ScaSeleniumWrapper {
     public static void startLicenseFilter(WebDriverWrapper webDriver, String filterText) throws TimeoutException {
         webDriver.clickElement(By.id(ScaSeleniumWrapper.SCA_LICENSES_FILTER_ID));
         webDriver.selectOptionByVisibleText(By.id(ScaSeleniumWrapper.SCA_LICENSES_FILTER_ID), filterText);
+    }
+
+    public static void startVulnerabilityFilter(WebDriverWrapper webDriver, String filterText) throws TimeoutException {
+        webDriver.clickElement(By.id(ScaSeleniumWrapper.SCA_VULNERABILITIES_FILTER_ID));
+        webDriver.selectOptionByVisibleText(By.id(ScaSeleniumWrapper.SCA_VULNERABILITIES_FILTER_ID), filterText);
     }
 
     public static boolean isLoggedIn(WebDriverWrapper webDriverWrapper) {

@@ -12,13 +12,13 @@
     </description>
 
     <servlet>
-        <servlet-name>LicenseMitigationServlet</servlet-name>
-        <servlet-class>api.LicenseMitigationServlet</servlet-class>
+        <servlet-name>ScaMitigationServlet</servlet-name>
+        <servlet-class>api.ScaMitigationServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
-        <servlet-name>LicenseMitigationServlet</servlet-name>
-        <url-pattern>/licenseMitigation/*</url-pattern>
+        <servlet-name>ScaMitigationServlet</servlet-name>
+        <url-pattern>/scaMitigation/*</url-pattern>
     </servlet-mapping>
 
 </web-app>

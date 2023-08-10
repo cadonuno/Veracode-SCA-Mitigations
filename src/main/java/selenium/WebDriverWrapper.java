@@ -16,9 +16,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 public final class WebDriverWrapper {
-
+    //TODO: replace by your driver name
     private static final String SELENIUM_DRIVER_NAME = "webdriver.gecko.driver";
-    private static final String SELENIUM_DRIVER_LOCATION = "REPLACE DRIVER LOCATION HERE";
+    //TODO: replace by location of your webdriver
+    private static final String SELENIUM_DRIVER_LOCATION = "C:\\Veracode\\geckodriver.exe";
     private static final int POLLING_TIMEOUT = 30;
 
     static {
@@ -88,6 +89,21 @@ public final class WebDriverWrapper {
         new Select(foundElement).selectByVisibleText(textToSelect);
     }
 
+    public void selectOptionByIndex(By elementToSelect, int selectorIndex) throws TimeoutException {
+        boolean hasFound = false;
+        Instant start = Instant.now();
+        WebElement foundElement = null;
+        while (!hasFound) {
+            try {
+                foundElement = webDriver.findElement(elementToSelect);
+                hasFound = true;
+            } catch (ElementNotInteractableException notFound) {
+                checkTimeout(start);
+            }
+        }
+        new Select(foundElement).selectByIndex(selectorIndex);
+    }
+
     private static void timeout() throws TimeoutException {
         throw new TimeoutException("Timed out when running command");
     }
@@ -152,5 +168,33 @@ public final class WebDriverWrapper {
 
     public void openUrl(String url) {
         webDriver.get(url);
+    }
+
+    public void waitForEitherPresentAndPerformAppropriateAction(By firstElement, By secondElement,
+                                                                RunnableWithTimeout toDoIfFirstPresent,
+                                                                RunnableWithTimeout toDoIfSecondPresent) throws TimeoutException {
+        Instant start = Instant.now();
+        while (true) {
+            try {
+                WebElement foundElement = webDriver.findElement(firstElement);
+                if (foundElement != null && foundElement.isDisplayed()) {
+                    toDoIfFirstPresent.run();
+                    return;
+                }
+                throw new NoSuchElementException("");
+            } catch (NoSuchElementException nonExisting) {
+                try {
+                    WebElement foundElement = webDriver.findElement(secondElement);
+                    if (foundElement != null && foundElement.isDisplayed()) {
+                        toDoIfSecondPresent.run();
+                        return;
+                    }
+                } catch (NoSuchElementException | ElementNotInteractableException neither) {
+                    checkTimeout(start);
+                }
+            } catch (ElementNotInteractableException notFound) {
+                checkTimeout(start);
+            }
+        }
     }
 }

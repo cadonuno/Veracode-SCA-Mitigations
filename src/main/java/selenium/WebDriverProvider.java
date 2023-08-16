@@ -7,7 +7,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 
 public class WebDriverProvider {
-    public static final boolean IS_HEADLESS = false;
+    public static final boolean IS_HEADLESS = true;
     private static final String CHROME_DRIVER = "webdriver.chrome.driver";
     private static final String FIREFOX_DRIVER = "webdriver.gecko.driver";
 
